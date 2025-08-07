@@ -1,0 +1,18 @@
+[package]
+name = "jsrust"
+version = "0.1.0"
+edition = "2021"
+authors = ["David Page"]
+description = "A JavaScript parser implemented in Rust"
+license = "MIT"
+repository = "https://github.com/your-username/jsrust"
+keywords = ["javascript", "parser", "ast", "compiler", "lexer"]
+categories = ["parsing"]
+
+[dependencies]
+# No external dependencies - we'll build everything from scratch
+# This makes the parser self-contained and educational
+
+[[bin]]
+name = "jsrust"
+path = "src/main.rs"
