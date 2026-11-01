@@ -392,3 +392,56 @@ impl Lexer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tokenizes_numbers_strings_keywords_and_operators() {
+        let mut lexer = Lexer::new("var answer = 42 + \"hi\"; if (answer >= 40 && answer !== 41) { return true; }");
+        let tokens = lexer.tokenize();
+
+        assert_eq!(tokens[0], Token::Keyword(Keyword::Var));
+        assert_eq!(tokens[1], Token::Identifier("answer".to_string()));
+        assert_eq!(tokens[2], Token::Assign);
+        assert_eq!(tokens[3], Token::Number(42.0));
+        assert_eq!(tokens[4], Token::Plus);
+        assert_eq!(tokens[5], Token::String("hi".to_string()));
+        assert_eq!(tokens[6], Token::Semicolon);
+        assert_eq!(tokens[7], Token::Keyword(Keyword::If));
+        assert_eq!(tokens[8], Token::LeftParen);
+        assert_eq!(tokens[9], Token::Identifier("answer".to_string()));
+        assert_eq!(tokens[10], Token::GreaterThanOrEqual);
+        assert_eq!(tokens[11], Token::Number(40.0));
+        assert_eq!(tokens[12], Token::LogicalAnd);
+        assert_eq!(tokens[13], Token::Identifier("answer".to_string()));
+        assert_eq!(tokens[14], Token::StrictNotEqual);
+        assert_eq!(tokens[15], Token::Number(41.0));
+        assert_eq!(tokens[16], Token::RightParen);
+        assert_eq!(tokens[17], Token::LeftBrace);
+        assert_eq!(tokens[18], Token::Keyword(Keyword::Return));
+        assert_eq!(tokens[19], Token::Boolean(true));
+        assert_eq!(tokens[20], Token::Semicolon);
+        assert_eq!(tokens[21], Token::RightBrace);
+        assert_eq!(tokens[22], Token::EOF);
+    }
+
+    #[test]
+    fn skips_comments_and_handles_multichar_tokens() {
+        let mut lexer = Lexer::new("x === y || z != 3 // comment\n/* block */\n20 <= 21");
+        let tokens = lexer.tokenize();
+
+        assert_eq!(tokens[0], Token::Identifier("x".to_string()));
+        assert_eq!(tokens[1], Token::StrictEqual);
+        assert_eq!(tokens[2], Token::Identifier("y".to_string()));
+        assert_eq!(tokens[3], Token::LogicalOr);
+        assert_eq!(tokens[4], Token::Identifier("z".to_string()));
+        assert_eq!(tokens[5], Token::NotEqual);
+        assert_eq!(tokens[6], Token::Number(3.0));
+        assert_eq!(tokens[7], Token::Number(20.0));
+        assert_eq!(tokens[8], Token::LessThanOrEqual);
+        assert_eq!(tokens[9], Token::Number(21.0));
+        assert_eq!(tokens[10], Token::EOF);
+    }
+}

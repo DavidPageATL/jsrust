@@ -742,3 +742,80 @@ impl Parser {
         self.match_token(&Token::Semicolon);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Lexer;
+
+    #[test]
+    fn parses_variable_declaration_and_binary_expression() {
+        let mut parser = Parser::new(Lexer::new("var total = 10 + 2 * 3;").tokenize());
+        let program = parser.parse().unwrap();
+
+        assert_eq!(program.body.len(), 1);
+        match &program.body[0] {
+            Statement::VarDeclaration(var_decl) => {
+                assert_eq!(var_decl.name, "total");
+                assert!(matches!(
+                    var_decl.init,
+                    Some(Expression::BinaryOp(BinaryOp {
+                        operator: BinaryOperator::Add,
+                        ..
+                    }))
+                ));
+            }
+            _ => panic!("Expected variable declaration"),
+        }
+    }
+
+    #[test]
+    fn parses_function_declaration_and_object_literal() {
+        let source = r#"
+            function greet(name) {
+                return name + "!";
+            }
+
+            var person = {
+                name: "Alice",
+                greet: function(name) {
+                    return name;
+                }
+            };
+        "#;
+
+        let mut parser = Parser::new(Lexer::new(source).tokenize());
+        let program = parser.parse().unwrap();
+
+        assert_eq!(program.body.len(), 2);
+        assert!(matches!(program.body[0], Statement::FunctionDeclaration(_)));
+        assert!(matches!(program.body[1], Statement::VarDeclaration(_)));
+    }
+
+    #[test]
+    fn parses_if_statement_and_member_access() {
+        let source = "if (count > 0) { total = total + items[0]; }";
+        let mut parser = Parser::new(Lexer::new(source).tokenize());
+        let program = parser.parse().unwrap();
+
+        assert_eq!(program.body.len(), 1);
+        match &program.body[0] {
+            Statement::IfStatement(if_stmt) => {
+                assert!(matches!(if_stmt.condition, Expression::BinaryOp(BinaryOp {
+                    operator: BinaryOperator::GreaterThan,
+                    ..
+                })));
+            }
+            _ => panic!("Expected if statement"),
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_syntax() {
+        let mut parser = Parser::new(Lexer::new("var x = (1 + 2;").tokenize());
+        assert!(parser.parse().is_err());
+
+        let mut parser = Parser::new(Lexer::new("function bad( { return 1; }").tokenize());
+        assert!(parser.parse().is_err());
+    }
+}
